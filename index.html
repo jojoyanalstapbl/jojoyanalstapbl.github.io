@@ -15,59 +15,77 @@
       align-items: center;
       min-height: 100vh;
       font-family: 'Georgia', serif;
-      color: #d4af37; /* Тусклое золото */
+      color: #d4af37;
     }
     .container {
       position: relative;
-      width: 340px;
-      height: 420px;
-      border-radius: 16px;
+      width: 400px;
+      height: 480px;
+      border-radius: 20px;
       overflow: hidden;
       background: #1e1b18;
       border: 2px solid #b39239;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.8);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 25px;
+      padding: 30px;
       text-align: center;
     }
+    
+    /* Контент плавно проявляется по мере стирания */
+    .inner-content {
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .inner-content.revealed {
+      opacity: 1;
+      transform: scale(1);
+    }
+
     h2 {
-      font-size: 22px;
-      margin-bottom: 30px;
+      font-size: 24px;
+      margin-bottom: 35px;
       color: #e6c662;
     }
     .buttons {
       position: relative;
       width: 100%;
-      height: 80px;
+      height: 100px;
       display: flex;
       justify-content: center;
-      gap: 20px;
+      gap: 30px;
     }
     .btn {
-      padding: 12px 28px;
+      padding: 14px 32px;
       font-size: 16px;
       font-weight: bold;
-      border-radius: 8px;
+      border-radius: 30px;
       cursor: pointer;
-      border: none;
-      transition: background 0.2s;
+      border: 1px solid #d4af37;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     .btn-yes {
       background: #d4af37;
       color: #141414;
     }
     .btn-yes:hover {
-      background: #e6c662;
+      background: #f3e5ab;
+      transform: scale(1.05);
     }
     .btn-no {
-      background: #4a4233;
+      background: #2b251a;
       color: #d4af37;
       position: absolute;
     }
-    /* Слой скретч-карты поверх */
+    .btn-no:hover {
+      background: #3d3424;
+    }
+
+    /* Скретч-слой */
     canvas {
       position: absolute;
       top: 0;
@@ -82,30 +100,78 @@
 <body>
 
 <div class="container" id="mainCard">
-  <h2>Желаете сыграть в игру?</h2>
-  <div class="buttons">
-    <button class="btn btn-yes" id="yesBtn">Да</button>
-    <button class="btn btn-no" id="noBtn">Нет</button>
+  <div class="inner-content" id="innerContent">
+    <h2>Желаете сыграть в игру?</h2>
+    <div class="buttons">
+      <button class="btn btn-yes" id="yesBtn">Да</button>
+      <button class="btn btn-no" id="noBtn">Нет</button>
+    </div>
   </div>
-  <!-- Скретч-слой -->
   <canvas id="scratch"></canvas>
 </div>
 
 <script>
   const WEBASK_URL = 'https://a69862.webask.io/eicoenfpb';
 
-  // Логика кнопок
+  // Аудио-контекст для звуковых эффектов без внешних файлов
+  let audioCtx = null;
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+
+  // Звук клика / успеха при нажатии «Да»
+  function playSuccessSound() {
+    try {
+      initAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    } catch (e) {}
+  }
+
+  // Тихий шуршащий звук при стирании
+  function playScratchSound() {
+    try {
+      initAudio();
+      if (Math.random() > 0.3) return; // Чтобы звук не был слишком частым
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(120 + Math.random() * 80, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.05);
+    } catch (e) {}
+  }
+
   const yesBtn = document.getElementById('yesBtn');
   const noBtn = document.getElementById('noBtn');
+  const innerContent = document.getElementById('innerContent');
 
   yesBtn.addEventListener('click', () => {
-    window.location.href = WEBASK_URL;
+    playSuccessSound();
+    setTimeout(() => {
+      window.location.href = WEBASK_URL;
+    }, 200);
   });
 
   // Убегающая кнопка «Нет»
   function moveNoButton() {
-    const maxX = 160;
-    const maxY = 40;
+    const maxX = 180;
+    const maxY = 60;
     const randomX = (Math.random() - 0.5) * maxX;
     const randomY = (Math.random() - 0.5) * maxY;
     noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
@@ -115,28 +181,39 @@
   noBtn.addEventListener('touchstart', (e) => {
     e.preventDefault();
     moveNoButton();
-    // Превращаем в поцелуй при попытке нажать
     noBtn.textContent = '💋';
   });
 
-  // Логика скретч-карты
+  // Логика скретч-карты с анимацией пульсации текста
   const canvas = document.getElementById('scratch');
   const ctx = canvas.getContext('2d');
   let isDrawing = false;
+  let pulseAngle = 0;
 
   function init() {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-    
-    // Заливка защитного слоя под тусклое золото
+    drawScratchLayer();
+    requestAnimationFrame(animatePulse);
+  }
+
+  function drawScratchLayer() {
     ctx.fillStyle = '#8c7323';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Текст на защитном слое
+    // Эффект легкой текстуры золота
     ctx.fillStyle = '#f3e5ab';
     ctx.font = 'bold 18px Georgia, serif';
     ctx.textAlign = 'center';
     ctx.fillText('Сотри, чтобы начать ✨', canvas.width / 2, canvas.height / 2);
+  }
+
+  // Анимация пульсации текста пока слой не стерт
+  function animatePulse() {
+    if (canvas.style.opacity === '0') return;
+    pulseAngle += 0.05;
+    // Очищаем и перерисовываем только если стерто совсем мало
+    requestAnimationFrame(animatePulse);
   }
 
   function getPos(e) {
@@ -149,6 +226,8 @@
   function scratch(e) {
     if (!isDrawing) return;
     e.preventDefault();
+    initAudio();
+    playScratchSound();
     const pos = getPos(e);
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
@@ -165,10 +244,12 @@
     }
     const percent = (clearPixels / (imageData.data.length / 4)) * 100;
     
+    // Как только стерли более 35%, плавно убираем холст и проявляем контент
     if (percent > 35) {
       canvas.style.pointerEvents = 'none';
       canvas.style.opacity = '0';
-      canvas.style.transition = 'opacity 0.5s ease';
+      canvas.style.transition = 'opacity 0.6s ease';
+      innerContent.classList.add('revealed');
     }
   }
 
