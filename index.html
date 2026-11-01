@@ -3,54 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Стирай слой!</title>
+  <title>Сыграем?</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 0;
-      background: #1a1a1a;
+      background: #141414;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      font-family: sans-serif;
-      color: #fff;
+      font-family: 'Georgia', serif;
+      color: #d4af37; /* Тусклое золото */
     }
     .container {
       position: relative;
-      width: 320px;
-      height: 400px;
+      width: 340px;
+      height: 420px;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    /* Скрытый контент под холстом */
-    .content {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #2b2b2b;
+      background: #1e1b18;
+      border: 2px solid #b39239;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 20px;
+      padding: 25px;
       text-align: center;
     }
-    .content h2 { margin-bottom: 10px; }
-    .content p { color: #ccc; margin-bottom: 20px; }
-    .btn {
-      padding: 12px 24px;
-      background: #ff4757;
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
+    h2 {
+      font-size: 22px;
+      margin-bottom: 30px;
+      color: #e6c662;
     }
-    /* Холст, который стирают */
+    .buttons {
+      position: relative;
+      width: 100%;
+      height: 80px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .btn {
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .btn-yes {
+      background: #d4af37;
+      color: #141414;
+    }
+    .btn-yes:hover {
+      background: #e6c662;
+    }
+    .btn-no {
+      background: #4a4233;
+      color: #d4af37;
+      position: absolute;
+    }
+    /* Слой скретч-карты поверх */
     canvas {
       position: absolute;
       top: 0;
@@ -64,21 +81,45 @@
 </head>
 <body>
 
-<div class="container">
-  <div class="content">
-    <h2>Секрет открыт!</h2>
-    <p>Переходим к опроснику...</p>
-    <a id="quizLink" class="btn" href="#">Перейти вручную</a>
+<div class="container" id="mainCard">
+  <h2>Желаете сыграть в игру?</h2>
+  <div class="buttons">
+    <button class="btn btn-yes" id="yesBtn">Да</button>
+    <button class="btn btn-no" id="noBtn">Нет</button>
   </div>
+  <!-- Скретч-слой -->
   <canvas id="scratch"></canvas>
 </div>
 
 <script>
-  // ССЫЛКА НА ВАШ ОПРОС WEBASK:
-  const WEBASK_URL = 'https://app.webask.io/quiz/edit/101590';
+  const WEBASK_URL = 'https://a69862.webask.io/eicoenfpb';
 
-  document.getElementById('quizLink').href = WEBASK_URL;
+  // Логика кнопок
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn = document.getElementById('noBtn');
 
+  yesBtn.addEventListener('click', () => {
+    window.location.href = WEBASK_URL;
+  });
+
+  // Убегающая кнопка «Нет»
+  function moveNoButton() {
+    const maxX = 160;
+    const maxY = 40;
+    const randomX = (Math.random() - 0.5) * maxX;
+    const randomY = (Math.random() - 0.5) * maxY;
+    noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+  }
+
+  noBtn.addEventListener('mouseover', moveNoButton);
+  noBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    moveNoButton();
+    // Превращаем в поцелуй при попытке нажать
+    noBtn.textContent = '💋';
+  });
+
+  // Логика скретч-карты
   const canvas = document.getElementById('scratch');
   const ctx = canvas.getContext('2d');
   let isDrawing = false;
@@ -87,25 +128,22 @@
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
     
-    // Заливка защитного слоя
-    ctx.fillStyle = '#ff6b6b';
+    // Заливка защитного слоя под тусклое золото
+    ctx.fillStyle = '#8c7323';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Текст поверх слоя
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px sans-serif';
+    // Текст на защитном слое
+    ctx.fillStyle = '#f3e5ab';
+    ctx.font = 'bold 18px Georgia, serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Сотри меня пальцем!', canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Сотри, чтобы начать ✨', canvas.width / 2, canvas.height / 2);
   }
 
   function getPos(e) {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return {
-      x: clientX - rect.left,
-      y: clientY - rect.top
-    };
+    return { x: clientX - rect.left, y: clientY - rect.top };
   }
 
   function scratch(e) {
@@ -119,7 +157,6 @@
     checkPercent();
   }
 
-  // Проверка % стертого слоя для автоперехода
   function checkPercent() {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     let clearPixels = 0;
@@ -128,14 +165,10 @@
     }
     const percent = (clearPixels / (imageData.data.length / 4)) * 100;
     
-    // Если стерли больше 40% — перенаправляем
-    if (percent > 40) {
+    if (percent > 35) {
       canvas.style.pointerEvents = 'none';
       canvas.style.opacity = '0';
       canvas.style.transition = 'opacity 0.5s ease';
-      setTimeout(() => {
-        window.location.href = WEBASK_URL;
-      }, 600);
     }
   }
 
