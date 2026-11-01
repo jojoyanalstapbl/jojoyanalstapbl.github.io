@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Стирай слой!</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: sans-serif;
+      color: #fff;
+    }
+    .container {
+      position: relative;
+      width: 320px;
+      height: 400px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    /* Скрытый контент под холстом */
+    .content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #2b2b2b;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+    }
+    .content h2 { margin-bottom: 10px; }
+    .content p { color: #ccc; margin-bottom: 20px; }
+    .btn {
+      padding: 12px 24px;
+      background: #ff4757;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    /* Холст, который стирают */
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      touch-action: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="content">
+    <h2>Секрет открыт!</h2>
+    <p>Переходим к опроснику...</p>
+    <a id="quizLink" class="btn" href="#">Перейти вручную</a>
+  </div>
+  <canvas id="scratch"></canvas>
+</div>
+
+<script>
+  // ССЫЛКА НА ВАШ ОПРОС WEBASK:
+  const WEBASK_URL = 'https://app.webask.io/quiz/edit/101590';
+
+  document.getElementById('quizLink').href = WEBASK_URL;
+
+  const canvas = document.getElementById('scratch');
+  const ctx = canvas.getContext('2d');
+  let isDrawing = false;
+
+  function init() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    // Заливка защитного слоя
+    ctx.fillStyle = '#ff6b6b';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Текст поверх слоя
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Сотри меня пальцем!', canvas.width / 2, canvas.height / 2);
+  }
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  }
+
+  function scratch(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
+    ctx.fill();
+    checkPercent();
+  }
+
+  // Проверка % стертого слоя для автоперехода
+  function checkPercent() {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let clearPixels = 0;
+    for (let i = 3; i < imageData.data.length; i += 4) {
+      if (imageData.data[i] === 0) clearPixels++;
+    }
+    const percent = (clearPixels / (imageData.data.length / 4)) * 100;
+    
+    // Если стерли больше 40% — перенаправляем
+    if (percent > 40) {
+      canvas.style.pointerEvents = 'none';
+      canvas.style.opacity = '0';
+      canvas.style.transition = 'opacity 0.5s ease';
+      setTimeout(() => {
+        window.location.href = WEBASK_URL;
+      }, 600);
+    }
+  }
+
+  canvas.addEventListener('mousedown', (e) => { isDrawing = true; scratch(e); });
+  canvas.addEventListener('mousemove', scratch);
+  canvas.addEventListener('mouseup', () => isDrawing = false);
+  canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); });
+  canvas.addEventListener('touchmove', scratch);
+  canvas.addEventListener('touchend', () => isDrawing = false);
+
+  window.onload = init;
+</script>
+
+</body>
+</html>
