@@ -75,7 +75,6 @@
       text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    /* Комментарии при попытке нажать «Нет» */
     .comment-box {
       font-size: 15px;
       font-style: italic;
@@ -121,7 +120,6 @@
       transform: scale(1.05);
     }
     
-    /* Состояние, когда кнопка Да занимает максимум внимания */
     .btn-yes.fullscreen-mode {
       width: 85%;
       padding: 18px;
@@ -129,13 +127,13 @@
       letter-spacing: 1px;
     }
 
-    /* Кнопка «Нет» теперь летает по всему окну браузера (fixed) */
+    /* Абсолютно свободный полет по всему экрану */
     .btn-no {
       background: #231f17;
       color: #d4af37;
       position: fixed;
       z-index: 999;
-      transition: transform 0.15s ease-out;
+      transition: all 0.1s ease-out;
     }
     .btn-no:hover {
       background: #332d22;
@@ -203,7 +201,6 @@
   <div class="kiss-popup" id="kissPopup">💋</div>
 </div>
 
-<!-- Кнопка «Нет» вынесена в корень, чтобы бегать по всему экрану -->
 <button class="btn btn-no" id="noBtn">🔒 Нет</button>
 
 <script>
@@ -283,10 +280,10 @@
   const hintTooltip = document.getElementById('hintTooltip');
   const commentBox = document.getElementById('commentBox');
 
-  // Изначально разместим кнопку «Нет» рядом с кнопкой «Да» внутри контейнера
+  // Ставим кнопку «Нет» рядом с «Да» при загрузке
   function placeNoButtonInitial() {
     const yesRect = yesBtn.getBoundingClientRect();
-    noBtn.style.left = (yesRect.right + 20) + 'px';
+    noBtn.style.left = (yesRect.right + 25) + 'px';
     noBtn.style.top = yesRect.top + 'px';
   }
 
@@ -297,7 +294,6 @@
     }, 250);
   });
 
-  // Комментарии и счетчик нажатий на «Нет»
   let noClicksCount = 0;
   const comments = [
     "Уверены? Подумайте еще раз ✨",
@@ -313,7 +309,7 @@
       commentBox.textContent = comments[noClicksCount - 1];
     }
 
-    // Если нажали/пытались поймать 4 раза — уничтожаем кнопку «Нет» и расширяем «Да»
+    // После 4 кликов кнопка исчезает навсегда, «Да» заполняет пространство
     if (noClicksCount >= 4) {
       noBtn.style.display = 'none';
       commentBox.textContent = "Выбора больше нет! 😉";
@@ -321,10 +317,11 @@
       return;
     }
 
-    // Убегает по ВСЕМУ экрану браузера
-    const padding = 80;
-    const randomX = padding + Math.random() * (window.innerWidth - noBtn.offsetWidth - padding * 2);
-    const randomY = padding + Math.random() * (window.innerHeight - noBtn.offsetHeight - padding * 2);
+    // Расчет случайных координат по ВСЕМУ экрану браузера с отступами, чтобы кнопка не улетала за края
+    const maxX = window.innerWidth - noBtn.offsetWidth - 30;
+    const maxY = window.innerHeight - noBtn.offsetHeight - 30;
+    const randomX = Math.max(30, Math.floor(Math.random() * maxX));
+    const randomY = Math.max(30, Math.floor(Math.random() * maxY));
     
     noBtn.style.left = randomX + 'px';
     noBtn.style.top = randomY + 'px';
@@ -352,14 +349,12 @@
     }, 700);
   }
 
-  // Подсказка появляется через 3 секунды
   let hintTimer = setTimeout(() => {
     if (canvas.style.opacity !== '0') {
       hintTooltip.classList.add('visible');
     }
   }, 3000);
 
-  // Скретч-карта
   const canvas = document.getElementById('scratch');
   const ctx = canvas.getContext('2d');
   let isDrawing = false;
@@ -404,7 +399,6 @@
     }
     const percent = (clearPixels / (imageData.data.length / 4)) * 100;
     
-    // Сделали порог срабатывания мягче (достаточно стереть 25%, чтобы контент красиво открылся)
     if (percent > 25) {
       revealContent();
     }
@@ -418,7 +412,6 @@
     innerContent.classList.add('revealed');
   }
 
-  // Также открываем контент автоматически по клику/тапу, если пользователь просто нажал на карточку вместо долгого стирания
   canvas.addEventListener('click', () => {
     revealContent();
   });
